@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	_ "github.com/go-sql-driver/mysql"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -11,9 +12,10 @@ import (
 )
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	Snippets *mysql.SnippetModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	Snippets      *mysql.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -32,14 +34,21 @@ func main() {
 		errorLog.Fatal(err)
 	}
 	defer db.Close()
+
+	// Initialize a new template cache...
+	templateCache, err := newTemplateCache("./ui/html/")
+
 	// Initialize an app
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		Snippets: &mysql.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		Snippets:      &mysql.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
+
 	// Routing
 	mux := app.routes()
+
 	// Start the server
 	srv := &http.Server{
 		Addr:     *addr,

@@ -30,7 +30,7 @@ func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
 	WHERE expires > UTC_TIMESTAMP() AND id = ?`
 	snippet := &models.Snippet{}
 	row := m.DB.QueryRow(stmt, id)
-	err := row.Scan(&snippet.ID, &snippet.Title, &snippet.Content, &snippet.Content, &snippet.Expires)
+	err := row.Scan(&snippet.ID, &snippet.Title, &snippet.Content, &snippet.Created, &snippet.Expires)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, models.ErrNoRecord

@@ -1,16 +1,33 @@
 package main
 
-import "net/http"
+import (
+	"github.com/go-chi/chi/v5"
+	"net/http"
+)
 
-func (app *application) routes() *http.ServeMux {
-	mux := http.NewServeMux()
+//
+//func (app *application) routes() http.Handler {
+//	mux := http.NewServeMux()
+//
+//	mux.HandleFunc("/", app.home)
+//	mux.HandleFunc("/snippet", app.showSnippet)
+//	mux.HandleFunc("/snippet/create", app.createSnippet)
+//
+//	fileServer := http.FileServer(http.Dir("./ui/static"))
+//	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+//
+//	return app.logRequest(secureHeader(mux))
+//}
 
-	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet", app.showSnippet)
-	mux.HandleFunc("/snippet/create", app.createSnippet)
+func (app *application) routes() http.Handler {
+	mux := chi.NewMux()
 
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	mux.Get("/", app.home)
+	mux.Get("/snippet/{id}", app.showSnippet)
+	mux.Post("/snippet/create", app.createSnippet)
 
-	return mux
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
+
+	return app.logRequest(secureHeader(mux))
 }

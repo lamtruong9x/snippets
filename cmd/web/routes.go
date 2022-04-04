@@ -24,6 +24,7 @@ func (app *application) routes() http.Handler {
 
 	mux.Get("/", app.home)
 	mux.Get("/snippet/{id}", app.showSnippet)
+	mux.Get("/snippet/create", app.createSnippetForm)
 	mux.Post("/snippet/create", app.createSnippet)
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))

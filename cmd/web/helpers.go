@@ -24,7 +24,8 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 }
 
 // For consistency, we'll also implement a notFound helper. This is simply a
-// convenience wrapper around clientError which sends a 404 Not Found response to // the user.
+// convenience wrapper around clientError which sends a 404 Not Found response to
+//the user.
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
@@ -34,6 +35,10 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 		td = &templateData{}
 	}
 	td.CurrentYear = time.Now().Year()
+	// Add the flash message to the template data, if one exists.
+	td.Flash = app.session.PopString(r, "flash")
+	//
+	td.IsAuthenticated = app.isAuthenticated(r)
 	return td
 }
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
@@ -43,11 +48,18 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 		return
 	}
 	buf := new(bytes.Buffer)
-	// Execute the template set, passing the dynamic data with the current // year injected.
+	// Execute the template set, passing the dynamic data with the current
+	// year injected.
 	err := ts.Execute(buf, app.addDefaultData(td, r))
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 	buf.WriteTo(w)
+}
+
+// Return true if the current request is from authenticated user
+// (contains "authenticatedUserID" in cookie)
+func (app *application) isAuthenticated(r *http.Request) bool {
+	return app.session.Exists(r, "authenticatedUserID")
 }

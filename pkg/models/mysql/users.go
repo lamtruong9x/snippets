@@ -22,9 +22,9 @@ func (m *UserModel) Insert(name, email, password string) error {
 	VALUES(?, ?, ?, UTC_TIMESTAMP())`
 	_, err = m.DB.Exec(stmt, name, email, string(hashedPassword))
 	if err != nil {
-		// If this returns an error, we use the errors.As() function to check // whether the error has the type *mysql.MySQLError. If it does, the
+		// If this returns an error, we use the errors.As() function to check whether the error has the type *mysql.MySQLError. If it does, the
 		// error will be assigned to the mySQLError variable. We can then check // whether or not the error relates to our users_uc_email key by
-		// checking the contents of the message string. If it does, we return // an ErrDuplicateEmail error.
+		// checking the contents of the message string. If it does, we return an ErrDuplicateEmail error.
 		var mySQLError *mysql.MySQLError
 		if errors.As(err, &mySQLError) {
 			if mySQLError.Number == 1062 && strings.Contains(mySQLError.Message, "users_uc_email") {
@@ -53,14 +53,8 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return 0, models.ErrInvalidCredentials
-		} else {
-			return 0, err
 		}
+		return 0, err
 	}
 	return id, nil
-}
-
-// We'll use the Get method to fetch details for a specific user based // on their user ID.
-func (m *UserModel) Get(id int) (*models.User, error) {
-	return nil, nil
 }

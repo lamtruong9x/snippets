@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"time"
 )
 
 // The serverError helper writes an error message and stack trace to the errorLog
 // send a 500 internal server error code to user.
 func (app *application) serverError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	app.errorLog.Output(2, trace)
+	app.errorLog.Println(err)
+	//trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	//app.errorLog.Output(2, trace)
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
@@ -61,5 +61,9 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 // Return true if the current request is from authenticated user
 // (contains "authenticatedUserID" in cookie)
 func (app *application) isAuthenticated(r *http.Request) bool {
-	return app.session.Exists(r, "authenticatedUserID")
+	isAuthenticated, ok := r.Context().Value(contextKeyIsAuthenticated).(bool)
+	if !ok {
+		return false
+	}
+	return isAuthenticated
 }

@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 	"snippetbox/pkg/models"
@@ -34,6 +35,21 @@ func (m *UserModel) Insert(name, email, password string) error {
 		return err
 	}
 	return nil
+}
+
+func (m *UserModel) Get(id int) (*models.User, error) {
+	u := &models.User{}
+
+	stmt := `SELECT id, name, email, created, active FROM users WHERE id=?`
+	row := m.DB.QueryRow(stmt, id)
+	err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Created, &u.Active)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNoRecord
+		}
+		return nil, fmt.Errorf("users - Get errors: %w", err)
+	}
+	return u, nil
 }
 
 func (m *UserModel) Authenticate(email, password string) (int, error) {

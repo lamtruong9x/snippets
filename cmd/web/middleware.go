@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"snippetbox/pkg/models"
 )
 
 func secureHeader(next http.Handler) http.Handler {
@@ -25,7 +28,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
-				app.serverError(w, fmt.Errorf("%s", err))
+				app.serverError(w, fmt.Errorf("%w", err))
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -45,5 +48,28 @@ func (app *application) requireAuthetication(next http.Handler) http.Handler {
 		w.Header().Add("Cache-Control", "no-store")
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) authenicate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		exists := app.session.Exists(r, "authenticatedUserID")
+		if !exists {
+			next.ServeHTTP(w, r)
+			return
+		}
+		user, err := app.users.Get(app.session.GetInt(r, "authenticatedUserID"))
+		//fmt.Println(err)
+		if errors.Is(err, models.ErrNoRecord) || !user.Active {
+			fmt.Println(err)
+			app.session.Remove(r, "authenticatedUserID")
+			next.ServeHTTP(w, r)
+			return
+		} else if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		ctx := context.WithValue(r.Context(), contextKeyIsAuthenticated, true)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

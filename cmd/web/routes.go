@@ -23,7 +23,7 @@ func (app *application) routes() http.Handler {
 	mux := chi.NewMux()
 
 	mux.Group(func(mux chi.Router) {
-		mux.Use(app.session.Enable)
+		mux.Use(app.session.Enable, app.authenicate)
 		mux.Get("/", app.home)
 		mux.Get("/snippet/{id}", app.showSnippet)
 
@@ -37,7 +37,7 @@ func (app *application) routes() http.Handler {
 	})
 
 	mux.Group(func(mux chi.Router) {
-		mux.Use(app.session.Enable, app.requireAuthetication)
+		mux.Use(app.session.Enable, app.authenicate, app.requireAuthetication)
 		mux.Get("/snippet/create", app.createSnippetForm)
 		mux.Post("/snippet/create", app.createSnippet)
 		mux.Post("/user/logout", app.logoutUser)
